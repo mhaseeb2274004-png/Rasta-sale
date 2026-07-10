@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Rasta Sales — Order & Sales Manager</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f2027;
+  --paper:#f4f6f4;
+  --card:#ffffff;
+  --brand:#0b5d4a;
+  --brand-dark:#083f33;
+  --brand-light:#e6f2ee;
+  --accent:#e0672a;
+  --line:#dfe6e2;
+  --muted:#5c6b66;
+  --danger:#c0392b;
+  --good:#0b5d4a;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Manrope',sans-serif;background:var(--paper);color:var(--ink);-webkit-tap-highlight-color:transparent;}
+h1,h2,h3,.num{font-family:'Space Grotesk',sans-serif;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-thumb{background:#c3cfc9;border-radius:10px;}
+
+/* App shell */
+.app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--paper);display:flex;flex-direction:column;position:relative;}
+.topbar{background:var(--brand-dark);color:#fff;padding:16px 18px 14px;position:sticky;top:0;z-index:40;}
+.topbar .brandrow{display:flex;align-items:center;gap:10px;}
+.mark{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'Space Grotesk';font-size:16px;flex-shrink:0;}
+.topbar h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.2px;}
+.topbar p{font-size:11px;margin:1px 0 0;color:#b9d3cb;}
+.sync-pill{margin-left:auto;font-size:10px;padding:5px 9px;border-radius:20px;display:flex;align-items:center;gap:5px;font-weight:600;}
+.sync-ok{background:#134e3f;color:#8ee6c6;}
+.sync-off{background:#4a2a20;color:#f0b199;}
+
+/* Tab bar (desktop-ish top nav, kept but bottom nav is primary) */
+.content{flex:1;padding:14px 14px 90px;}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:700;margin:18px 2px 8px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;}
+.card + .card{margin-top:10px;}
+
+/* Bottom nav */
+.bottomnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid var(--line);display:flex;z-index:50;padding:6px 6px calc(6px + env(safe-area-inset-bottom));}
+.bottomnav button{flex:1;background:none;border:none;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#9aa8a2;font-size:10px;font-weight:600;font-family:'Manrope';}
+.bottomnav button i{font-size:16px;}
+.bottomnav button.active{color:var(--brand);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:11px;padding:12px 16px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:'Manrope';}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:active{background:var(--brand-dark);}
+.btn-outline{background:#fff;color:var(--brand);border:1.5px solid var(--brand);}
+.btn-accent{background:var(--accent);color:#fff;}
+.btn-ghost{background:var(--brand-light);color:var(--brand-dark);}
+.btn-danger{background:#fdeceb;color:var(--danger);}
+.btn-block{width:100%;}
+.btn-sm{padding:8px 12px;font-size:12px;border-radius:9px;}
+
+input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:'Manrope';background:#fff;color:var(--ink);}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);}
+label.f{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:5px;margin-top:10px;}
+label.f:first-child{margin-top:0;}
+
+.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.badge-green{background:#e3f3ec;color:var(--good);}
+.badge-orange{background:#fdecdf;color:var(--accent);}
+.badge-red{background:#fdeceb;color:var(--danger);}
+.badge-gray{background:#eef1ef;color:var(--muted);}
+
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;}
+.stat .num{font-size:21px;font-weight:700;}
+.stat .lbl{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:2px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.list-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);}
+.list-item:last-child{border-bottom:none;}
+.avatar{width:38px;height:38px;border-radius:10px;background:var(--brand-light);color:var(--brand-dark);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+
+.qty-ctrl{display:flex;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;}
+.qty-ctrl button{width:30px;height:30px;border:none;background:var(--brand-light);color:var(--brand-dark);font-weight:800;font-size:15px;cursor:pointer;}
+.qty-ctrl input{border:none;width:36px;text-align:center;padding:0;font-weight:700;-moz-appearance:textfield;}
+.qty-ctrl input::-webkit-outer-spin-button,.qty-ctrl input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
+.fab-cart{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:452px;background:var(--brand-dark);color:#fff;border-radius:14px;padding:12px 16px;display:none;align-items:center;justify-content:space-between;box-shadow:0 8px 24px rgba(8,63,51,.35);z-index:45;cursor:pointer;}
+.fab-cart.show{display:flex;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(15,32,39,.55);z-index:100;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;max-height:88vh;overflow-y:auto;padding:18px;animation:slideup .22s ease;}
+@keyframes slideup{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-handle{width:38px;height:4px;background:var(--line);border-radius:10px;margin:0 auto 14px;}
+.modal h3{margin:0 0 12px;font-size:16px;}
+
+.toast-wrap{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;width:calc(100% - 28px);max-width:452px;pointer-events:none;}
+.toast{background:var(--ink);color:#fff;padding:11px 15px;border-radius:11px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:0 6px 18px rgba(0,0,0,.2);}
+.toast.err{background:var(--danger);}
+.toast.ok{background:var(--brand-dark);}
+
+.empty{text-align:center;padding:38px 10px;color:var(--muted);}
+.empty i{font-size:28px;color:#c3cfc9;margin-bottom:8px;display:block;}
+.searchbar{position:relative;}
+.searchbar i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#a7b3ae;font-size:13px;}
+.searchbar input{padding-left:34px;}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{text-align:right;font-size:10px;text-transform:uppercase;color:var(--muted);padding:6px 4px;border-bottom:2px solid var(--line);}
+td{padding:8px 4px;border-bottom:1px solid var(--line);}
+th:first-child,td:first-child{text-align:right;}
+
+.chip-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+.chip{flex-shrink:0;padding:6px 13px;border-radius:20px;background:#fff;border:1.5px solid var(--line);font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;cursor:pointer;}
+.chip.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+
+.hidden{display:none !important;}
+a{color:var(--brand);}
+
+/* Day Report full-screen overlay */
+.report-overlay{position:fixed;inset:0;background:var(--paper);z-index:150;display:none;flex-direction:column;}
+.report-overlay.show{display:flex;}
+.report-head{background:var(--brand-dark);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5;}
+.report-head input[type=date]{width:auto;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff;font-size:12.5px;padding:7px 9px;}
+.report-body{flex:1;overflow-y:auto;padding:14px;padding-bottom:100px;}
+.report-actions{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:5;}
+.bill-block{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px;}
+.bill-block h4{margin:0 0 2px;font-size:13.5px;}
+.bill-block .sub{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.mini-table{width:100%;font-size:12px;border-collapse:collapse;}
+.mini-table td{padding:4px 0;border:none;}
+.mini-table td:last-child{text-align:left;font-weight:700;}
+.mini-total{display:flex;justify-content:space-between;border-top:1px dashed var(--line);margin-top:6px;padding-top:6px;font-weight:800;font-size:13px;}
+
+@media print{
+  body *{visibility:hidden;}
+  .report-overlay, .report-overlay *{visibility:visible;}
+  .report-overlay{position:absolute;inset:auto;top:0;left:0;}
+  .report-head, .report-actions{display:none !important;}
+  .report-body{padding:0;}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="topbar">
+    <div class="brandrow">
+      <div class="mark">R</div>
+      <div>
+        <h1>Rasta Sales</h1>
+        <p>Order, Stock &amp; Profit Manager</p>
+      </div>
+      <div class="sync-pill sync-off" id="syncPill"><i class="fa-solid fa-cloud"></i><span>Sync Off</span></div>
+    </div>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <div class="fab-cart" id="fabCart" onclick="openCart()">
+    <span id="fabCartText">2 items</span>
+    <span id="fabCartTotal" class="num" style="font-weight:700;">Rs 0 <i class="fa-solid fa-chevron-up" style="margin-right:6px;font-size:11px;"></i></span>
+  </div>
+
+  <div class="bottomnav">
+    <button data-tab="order" onclick="goTab('order')"><i class="fa-solid fa-route"></i>Order</button>
+    <button data-tab="stock" onclick="goTab('stock')"><i class="fa-solid fa-boxes-stacked"></i>Stock</button>
+    <button data-tab="admin" onclick="goTab('admin')"><i class="fa-solid fa-chart-line"></i>Dashboard</button>
+    <button data-tab="db" onclick="goTab('db')"><i class="fa-solid fa-database"></i>Database</button>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<div class="report-overlay" id="reportOverlay">
+  <div class="report-head">
+    <button onclick="closeDayReport()" style="background:none;border:none;color:#fff;font-size:17px;"><i class="fa-solid fa-arrow-right"></i></button>
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:14px;">Din Ka Report</div>
+      <div style="font-size:10.5px;color:#b9d3cb;">Bills, Profit &amp; Warehouse List</div>
+    </div>
+    <input type="date" id="reportDate" onchange="renderDayReport(this.value)">
+  </div>
+  <div class="report-body" id="reportBody"></div>
+  <div class="report-actions">
+    <button class="btn btn-outline btn-block" onclick="window.print()"><i class="fa-solid fa-print"></i> Print / PDF</button>
+    <button class="btn btn-primary btn-block" onclick="downloadReportText()"><i class="fa-solid fa-download"></i> Download</button>
+  </div>
+</div>
+
+<script>
+/* ============================= STORAGE ============================= */
+const DB_KEY='rasta_sales_db_v1';
+function loadDB(){
+  const raw=localStorage.getItem(DB_KEY);
+  if(raw) return JSON.parse(raw);
+  const fresh=seedDB();
+  localStorage.setItem(DB_KEY,JSON.stringify(fresh));
+  return fresh;
+}
+function saveDB(){ localStorage.setItem(DB_KEY,JSON.stringify(DB)); }
+
+function seedDB(){
+  return {
+    settings:{ sheetUrl:'', shopName:'My Distribution', currency:'Rs' },
+    products:[
+      {id:'p1',name:'Surf Excel 1kg',category:'Detergent',packing:'12 pcs/ctn',cost:380,price:420,stock:60},
+      {id:'p2',name:'Surf Excel 500g',category:'Detergent',packing:'24 pcs/ctn',cost:200,price:225,stock:80},
+      {id:'p3',name:'Lifebuoy Soap 100g',category:'Soap',packing:'72 pcs/ctn',cost:45,price:55,stock:200},
+      {id:'p4',name:'Lux Soap 100g',category:'Soap',packing:'72 pcs/ctn',cost:48,price:58,stock:150},
+      {id:'p5',name:'Sunsilk Shampoo 200ml',category:'Shampoo',packing:'24 pcs/ctn',cost:320,price:370,stock:40},
+      {id:'p6',name:'Clear Shampoo 200ml',category:'Shampoo',packing:'24 pcs/ctn',cost:340,price:390,stock:35},
+      {id:'p7',name:'Glow & Lovely 50g',category:'Cream',packing:'48 pcs/ctn',cost:150,price:175,stock:90},
+      {id:'p8',name:'Vaseline Lotion 200ml',category:'Lotion',packing:'24 pcs/ctn',cost:280,price:320,stock:25},
+      {id:'p9',name:'Ponds Powder 50g',category:'Powder',packing:'48 pcs/ctn',cost:130,price:150,stock:70},
+      {id:'p10',name:'Closeup Toothpaste 100g',category:'Oral Care',packing:'48 pcs/ctn',cost:110,price:130,stock:100},
+      {id:'p11',name:'Rin Detergent Bar',category:'Detergent',packing:'72 pcs/ctn',cost:30,price:38,stock:8},
+      {id:'p12',name:'Knorr Noodles',category:'Food',packing:'24 pcs/ctn',cost:40,price:50,stock:15}
+    ],
+    dukandars:[
+      {id:'d1',name:'Al-Karam General Store',area:'Model Town',phone:'0300-1234567',day:'Monday'},
+      {id:'d2',name:'Rehman Kiryana Store',area:'Gulberg',phone:'0301-2345678',day:'Monday'},
+      {id:'d3',name:'City Super Mart',area:'Johar Town',phone:'0302-3456789',day:'Tuesday'},
+      {id:'d4',name:'Baba Traders',area:'Township',phone:'0333-4567890',day:'Wednesday'}
+    ],
+    orders:[],
+    cart:{ dukandarId:'', items:{} } // items: {productId: qty}
+  };
+}
+let DB=loadDB();
+
+/* ============================= UTIL ============================= */
+function uid(p){ return p+Date.now().toString(36)+Math.floor(Math.random()*999); }
+function money(n){ return DB.settings.currency+' '+Number(n||0).toLocaleString('en-PK'); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(d){ const dt=new Date(d); return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}); }
+function toast(msg,type){
+  const w=document.getElementById('toastWrap');
+  const t=document.createElement('div');
+  t.className='toast '+(type||'');
+  t.innerHTML='<i class="fa-solid fa-'+(type==='err'?'circle-exclamation':type==='ok'?'circle-check':'info-circle')+'"></i><span>'+msg+'</span>';
+  w.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); },2600);
+}
+function openModal(html){
+  document.getElementById('modalBody').innerHTML='<div class="modal-handle"></div>'+html;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+
+/* ============================= SYNC (Google Sheets via Apps Script) ============================= */
+function updateSyncPill(){
+  const pill=document.getElementById('syncPill');
+  if(DB.settings.sheetUrl){
+    pill.className='sync-pill sync-ok'; pill.innerHTML='<i class="fa-solid fa-cloud-arrow-up"></i><span>Sync On</span>';
+  } else {
+    pill.className='sync-pill sync-off'; pill.innerHTML='<i class="fa-solid fa-cloud"></i><span>Sync Off</span>';
+  }
+}
+async function pushOrderToSheet(order){
+  if(!DB.settings.sheetUrl) return false;
+  try{
+    await fetch(DB.settings.sheetUrl,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({type:'order',payload:order})
+    });
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ============================= NAV ============================= */
+let currentTab='order';
+function goTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.bottomnav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  render();
+  document.getElementById('content').scrollTop=0;
+  window.scrollTo(0,0);
+}
+function render(){
+  updateSyncPill();
+  const c=document.getElementById('content');
+  if(currentTab==='order') c.innerHTML=renderOrder();
+  if(currentTab==='stock') c.innerHTML=renderStock();
+  if(currentTab==='admin') c.innerHTML=renderAdmin();
+  if(currentTab==='db') c.innerHTML=renderDB();
+  updateCartFab();
+}
+
+/* ============================= TAB: ORDER TAKER ============================= */
+let orderSearch='';
+let orderCategory='All';
+
+function renderOrder(){
+  const dukandar=DB.dukandars.find(d=>d.id===DB.cart.dukandarId);
+  const cats=['All',...new Set(DB.products.map(p=>p.category))];
+  const todayName=new Date().toLocaleDateString('en-US',{weekday:'long'});
+  const todaysRoute=DB.dukandars.filter(d=>d.day===todayName);
+
+  let html='';
+  html+='<div class="section-title">Aaj Ka Route — '+todayName+'</div>';
+  if(todaysRoute.length===0){
+    html+='<div class="card empty" style="padding:16px;"><i class="fa-solid fa-route"></i>Aaj kisi dukandar ka route set nahi</div>';
+  } else {
+    html+='<div class="chip-row">';
+    todaysRoute.forEach(d=>{
+      html+='<div class="chip '+(DB.cart.dukandarId===d.id?'active':'')+'" onclick="selectDukandar(\''+d.id+'\')">'+d.name+'</div>';
+    });
+    html+='</div>';
+  }
+
+  html+='<div class="section-title">Dukandar</div>';
+  html+='<div class="card" onclick="pickDukandarModal()" style="cursor:pointer;">';
+  if(dukandar){
+    html+='<div class="row"><div style="display:flex;align-items:center;gap:10px;"><div class="avatar">'+dukandar.name.charAt(0)+'</div><div><div style="font-weight:700;font-size:13.5px;">'+dukandar.name+'</div><div style="font-size:11.5px;color:var(--muted);">'+dukandar.area+' • '+dukandar.phone+'</div></div></div><i class="fa-solid fa-chevron-left" style="color:var(--muted);"></i></div>';
+  } else {
+    html+='<div class="row"><span style="color:var(--muted);font-size:13px;"><i class="fa-solid fa-shop" style="margin-left:6px;"></i>Dukandar select karein</span><i class="fa-solid fa-chevron-left" style="color:var(--muted);"></i></div>';
+  }
+  html+='</div>';
+
+  html+='<div class="section-title">Products</div>';
+  html+='<div class="searchbar" style="margin-bottom:8px;"><i class="fa-solid fa-search"></i><input placeholder="Product talash karein..." value="'+orderSearch+'" oninput="orderSearch=this.value;render()"></div>';
+  html+='<div class="chip-row" style="margin-bottom:10px;">';
+  cats.forEach(cat=>{ html+='<div class="chip '+(orderCategory===cat?'active':'')+'" onclick="orderCategory=\''+cat+'\';render()">'+cat+'</div>'; });
+  html+='</div>';
+
+  const filtered=DB.products.filter(p=>{
+    const matchS=p.name.toLowerCase().includes(orderSearch.toLowerCase());
+    const matchC=orderCategory==='All'||p.category===orderCategory;
+    return matchS&&matchC;
+  });
+
+  html+='<div class="card" style="padding:4px 14px;">';
+  if(filtered.length===0) html+='<div class="empty"><i class="fa-solid fa-box-open"></i>Koi product nahi mila</div>';
+  filtered.forEach(p=>{
+    const qty=DB.cart.items[p.id]||0;
+    const low=p.stock<=15;
+    html+='<div class="list-item">';
+    html+='<div style="flex:1;">';
+    html+='<div style="font-weight:700;font-size:13px;">'+p.name+'</div>';
+    html+='<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+money(p.price)+' • <span class="'+(low?'badge badge-red':'')+'" style="'+(low?'':'color:var(--muted);')+'">Stock: '+p.stock+'</span></div>';
+    html+='</div>';
+    html+='<div class="qty-ctrl"><button onclick="cartChange(\''+p.id+'\',-1)">−</button><input type="number" value="'+qty+'" onchange="cartSet(\''+p.id+'\',this.value)"><button onclick="cartChange(\''+p.id+'\',1)">+</button></div>';
+    html+='</div>';
+  });
+  html+='</div>';
+
+  return html;
+}
+function selectDukandar(id){ DB.cart.dukandarId=id; saveDB(); render(); }
+function pickDukandarModal(){
+  let html='<h3>Dukandar Chunein</h3><div class="searchbar" style="margin-bottom:10px;"><i class="fa-solid fa-search"></i><input id="dukSearch" placeholder="Naam ya area..." oninput="filterDukModal(this.value)"></div><div id="dukList"></div><button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closeModal();goTab(\'db\')"><i class="fa-solid fa-plus"></i> Naya Dukandar Add Karein</button>';
+  openModal(html);
+  filterDukModal('');
+}
+function filterDukModal(q){
+  const list=DB.dukandars.filter(d=>d.name.toLowerCase().includes(q.toLowerCase())||d.area.toLowerCase().includes(q.toLowerCase()));
+  let html='';
+  if(list.length===0) html='<div class="empty"><i class="fa-solid fa-user-slash"></i>Koi dukandar nahi mila</div>';
+  list.forEach(d=>{
+    html+='<div class="list-item" style="cursor:pointer;" onclick="selectDukandar(\''+d.id+'\');closeModal();"><div class="avatar">'+d.name.charAt(0)+'</div><div style="flex:1;"><div style="font-weight:700;font-size:13.5px;">'+d.name+'</div><div style="font-size:11.5px;color:var(--muted);">'+d.area+' • '+d.day+'</div></div></div>';
+  });
+  document.getElementById('dukList').innerHTML=html;
+}
+function cartChange(pid,delta){
+  const cur=DB.cart.items[pid]||0;
+  const nv=Math.max(0,cur+delta);
+  if(nv===0) delete DB.cart.items[pid]; else DB.cart.items[pid]=nv;
+  saveDB(); render();
+}
+function cartSet(pid,val){
+  const nv=Math.max(0,parseInt(val)||0);
+  if(nv===0) delete DB.cart.items[pid]; else DB.cart.items[pid]=nv;
+  saveDB(); render();
+}
+function cartTotals(){
+  let total=0,count=0,cost=0;
+  Object.entries(DB.cart.items).forEach(([pid,qty])=>{
+    const p=DB.products.find(x=>x.id===pid);
+    if(!p) return;
+    total+=p.price*qty; cost+=p.cost*qty; count+=qty;
+  });
+  return {total,count,cost};
+}
+function updateCartFab(){
+  const fab=document.getElementById('fabCart');
+  const {total,count}=cartTotals();
+  if(count>0 && currentTab==='order'){
+    fab.classList.add('show');
+    document.getElementById('fabCartText').textContent=count+' items';
+    document.getElementById('fabCartTotal').innerHTML=money(total)+' <i class="fa-solid fa-chevron-up" style="margin-right:6px;font-size:11px;"></i>';
+  } else {
+    fab.classList.remove('show');
+  }
+}
+function openCart(){
+  const {total,count,cost}=cartTotals();
+  const dukandar=DB.dukandars.find(d=>d.id===DB.cart.dukandarId);
+  let html='<h3>Order Summary</h3>';
+  if(!dukandar) html+='<div class="badge badge-orange" style="margin-bottom:10px;display:inline-block;"><i class="fa-solid fa-triangle-exclamation"></i> Pehle dukandar select karein</div><br>';
+  html+='<div class="card">';
+  Object.entries(DB.cart.items).forEach(([pid,qty])=>{
+    const p=DB.products.find(x=>x.id===pid); if(!p) return;
+    html+='<div class="list-item"><div style="flex:1;"><div style="font-weight:700;font-size:13px;">'+p.name+'</div><div style="font-size:11px;color:var(--muted);">'+qty+' x '+money(p.price)+'</div></div><div style="font-weight:700;font-size:13px;">'+money(p.price*qty)+'</div></div>';
+  });
+  html+='</div>';
+  html+='<div class="row" style="margin-top:14px;padding:0 4px;"><span style="color:var(--muted);font-size:13px;">Total Items</span><span style="font-weight:700;">'+count+'</span></div>';
+  html+='<div class="row" style="margin-top:6px;padding:0 4px;"><span style="font-weight:700;font-size:15px;">Grand Total</span><span style="font-weight:800;font-size:17px;color:var(--brand);">'+money(total)+'</span></div>';
+  html+='<button class="btn btn-primary btn-block" style="margin-top:16px;" onclick="confirmOrder()"><i class="fa-solid fa-check"></i> Order Confirm Karein</button>';
+  html+='<button class="btn btn-outline btn-block" style="margin-top:8px;" onclick="closeModal()">Wapis Jayein</button>';
+  openModal(html);
+}
+async function confirmOrder(){
+  const {total,count,cost}=cartTotals();
+  if(!DB.cart.dukandarId){ toast('Pehle dukandar select karein','err'); return; }
+  if(count===0){ toast('Cart khali hy','err'); return; }
+  const order={
+    id:uid('o'),
+    dukandarId:DB.cart.dukandarId,
+    date:new Date().toISOString(),
+    items:Object.entries(DB.cart.items).map(([pid,qty])=>{
+      const p=DB.products.find(x=>x.id===pid);
+      return {productId:pid,name:p.name,qty,price:p.price,cost:p.cost};
+    }),
+    total,cost,profit:total-cost,
+    synced:false
+  };
+  // deduct stock
+  order.items.forEach(it=>{
+    const p=DB.products.find(x=>x.id===it.productId);
+    if(p) p.stock=Math.max(0,p.stock-it.qty);
+  });
+  DB.orders.unshift(order);
+  DB.cart.items={};
+  saveDB();
+  closeModal();
+  toast('Order save ho gaya!','ok');
+  render();
+  const ok=await pushOrderToSheet(order);
+  if(DB.settings.sheetUrl){
+    order.synced=true; saveDB();
+  }
+}
+
+/* ============================= TAB: STOCK ============================= */
+function renderStock(){
+  const low=DB.products.filter(p=>p.stock<=15);
+  let html='<div class="grid2">';
+  html+='<div class="stat"><div class="num">'+DB.products.length+'</div><div class="lbl">TOTAL PRODUCTS</div></div>';
+  html+='<div class="stat"><div class="num" style="color:'+(low.length?'var(--danger)':'var(--brand)')+';">'+low.length+'</div><div class="lbl">LOW STOCK ITEMS</div></div>';
+  html+='</div>';
+
+  if(low.length>0){
+    html+='<div class="section-title">Low Stock Alert</div>';
+    html+='<div class="card" style="padding:4px 14px;">';
+    low.forEach(p=>{
+      html+='<div class="list-item"><div style="flex:1;"><div style="font-weight:700;font-size:13px;">'+p.name+'</div><div style="font-size:11px;color:var(--muted);">'+p.category+'</div></div><span class="badge badge-red">'+p.stock+' left</span></div>';
+    });
+    html+='</div>';
+  }
+
+  html+='<div class="section-title">Poora Stock</div>';
+  html+='<div class="card" style="padding:4px 14px;">';
+  DB.products.forEach(p=>{
+    const pct=Math.min(100,(p.stock/100)*100);
+    const color=p.stock<=15?'var(--danger)':p.stock<=40?'var(--accent)':'var(--brand)';
+    html+='<div style="padding:11px 0;border-bottom:1px solid var(--line);">';
+    html+='<div class="row"><span style="font-weight:700;font-size:13px;">'+p.name+'</span><span style="font-weight:700;font-size:13px;color:'+color+';">'+p.stock+'</span></div>';
+    html+='<div style="height:6px;background:var(--line);border-radius:10px;margin-top:6px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:10px;"></div></div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+/* ============================= TAB: ADMIN DASHBOARD ============================= */
+function renderAdmin(){
+  const today=todayStr();
+  const todaysOrders=DB.orders.filter(o=>o.date.slice(0,10)===today);
+  const todaySales=todaysOrders.reduce((s,o)=>s+o.total,0);
+  const todayProfit=todaysOrders.reduce((s,o)=>s+o.profit,0);
+  const totalSales=DB.orders.reduce((s,o)=>s+o.total,0);
+  const totalProfit=DB.orders.reduce((s,o)=>s+o.profit,0);
+
+  const productSales={};
+  DB.orders.forEach(o=>o.items.forEach(it=>{ productSales[it.name]=(productSales[it.name]||0)+it.qty; }));
+  const topProducts=Object.entries(productSales).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxTop=topProducts.length?topProducts[0][1]:1;
+
+  let html='<button class="btn btn-accent btn-block" onclick="openDayReport()"><i class="fa-solid fa-file-invoice"></i> Din Ka Report — Bills, Profit &amp; Warehouse List</button>';
+  html+='<div class="grid2" style="margin-top:10px;">';
+  html+='<div class="stat"><div class="num" style="color:var(--brand);">'+money(todaySales)+'</div><div class="lbl">AAJ KI SALE</div></div>';
+  html+='<div class="stat"><div class="num" style="color:var(--accent);">'+money(todayProfit)+'</div><div class="lbl">AAJ KA PROFIT</div></div>';
+  html+='<div class="stat"><div class="num">'+todaysOrders.length+'</div><div class="lbl">AAJ KE ORDERS</div></div>';
+  html+='<div class="stat"><div class="num">'+DB.orders.length+'</div><div class="lbl">TOTAL ORDERS</div></div>';
+  html+='</div>';
+
+  html+='<div class="section-title">Overall Performance</div>';
+  html+='<div class="card"><div class="row"><span style="font-size:12.5px;color:var(--muted);">Total Sales (All Time)</span><span style="font-weight:700;">'+money(totalSales)+'</span></div>';
+  html+='<div class="row" style="margin-top:8px;"><span style="font-size:12.5px;color:var(--muted);">Total Profit (All Time)</span><span style="font-weight:700;color:var(--brand);">'+money(totalProfit)+'</span></div>';
+  html+='<div class="row" style="margin-top:8px;"><span style="font-size:12.5px;color:var(--muted);">Profit Margin</span><span style="font-weight:700;">'+(totalSales?((totalProfit/totalSales)*100).toFixed(1):'0')+'%</span></div></div>';
+
+  if(topProducts.length){
+    html+='<div class="section-title">Top Selling Products</div><div class="card">';
+    topProducts.forEach(([name,qty])=>{
+      html+='<div style="margin-bottom:10px;"><div class="row" style="margin-bottom:4px;"><span style="font-size:12.5px;font-weight:600;">'+name+'</span><span style="font-size:12px;color:var(--muted);">'+qty+' units</span></div><div style="height:6px;background:var(--line);border-radius:10px;overflow:hidden;"><div style="height:100%;width:'+((qty/maxTop)*100)+'%;background:var(--brand);border-radius:10px;"></div></div></div>';
+    });
+    html+='</div>';
+  }
+
+  html+='<div class="section-title">Recent Orders</div>';
+  html+='<div class="card" style="padding:4px 14px;">';
+  if(DB.orders.length===0) html+='<div class="empty"><i class="fa-solid fa-receipt"></i>Abhi tak koi order nahi</div>';
+  DB.orders.slice(0,10).forEach(o=>{
+    const d=DB.dukandars.find(x=>x.id===o.dukandarId);
+    html+='<div class="list-item" style="cursor:pointer;" onclick="viewOrder(\''+o.id+'\')"><div class="avatar" style="background:var(--brand-light);"><i class="fa-solid fa-receipt" style="color:var(--brand-dark);font-size:13px;"></i></div><div style="flex:1;"><div style="font-weight:700;font-size:13px;">'+(d?d.name:'—')+'</div><div style="font-size:11px;color:var(--muted);">'+fmtDate(o.date)+' • '+o.items.length+' items '+(o.synced?'<i class="fa-solid fa-cloud-arrow-up" style="color:var(--brand);"></i>':'')+'</div></div><div style="font-weight:700;font-size:13px;">'+money(o.total)+'</div></div>';
+  });
+  html+='</div>';
+  return html;
+}
+function viewOrder(id){
+  const o=DB.orders.find(x=>x.id===id); if(!o) return;
+  const d=DB.dukandars.find(x=>x.id===o.dukandarId);
+  let html='<h3>Order Receipt</h3>';
+  html+='<div class="card"><div style="font-weight:700;">'+(d?d.name:'—')+'</div><div style="font-size:11.5px;color:var(--muted);">'+(d?d.area:'')+' • '+fmtDate(o.date)+'</div></div>';
+  html+='<div class="card" style="margin-top:10px;padding:4px 14px;">';
+  o.items.forEach(it=>{
+    html+='<div class="list-item"><div style="flex:1;"><div style="font-weight:600;font-size:13px;">'+it.name+'</div><div style="font-size:11px;color:var(--muted);">'+it.qty+' x '+money(it.price)+'</div></div><div style="font-weight:700;font-size:13px;">'+money(it.qty*it.price)+'</div></div>';
+  });
+  html+='</div>';
+  html+='<div class="row" style="margin-top:12px;padding:0 4px;"><span style="font-weight:700;">Total</span><span style="font-weight:800;color:var(--brand);font-size:16px;">'+money(o.total)+'</span></div>';
+  html+='<div class="row" style="margin-top:4px;padding:0 4px;"><span style="font-size:12px;color:var(--muted);">Profit</span><span style="font-size:12px;color:var(--muted);">'+money(o.profit)+'</span></div>';
+  html+='<button class="btn btn-outline btn-block" style="margin-top:14px;" onclick="closeModal()">Band Karein</button>';
+  openModal(html);
+}
+
+/* ============================= TAB: DATABASE ============================= */
+let dbSection='products';
+function renderDB(){
+  let html='<div class="chip-row" style="margin-bottom:12px;">';
+  [['products','Products'],['dukandars','Dukandars'],['settings','Settings']].forEach(([k,l])=>{
+    html+='<div class="chip '+(dbSection===k?'active':'')+'" onclick="dbSection=\''+k+'\';render()">'+l+'</div>';
+  });
+  html+='</div>';
+
+  if(dbSection==='products') html+=renderDBProducts();
+  if(dbSection==='dukandars') html+=renderDBDukandars();
+  if(dbSection==='settings') html+=renderDBSettings();
+  return html;
+}
+function renderDBProducts(){
+  let html='<button class="btn btn-primary btn-block" onclick="editProductModal()"><i class="fa-solid fa-plus"></i> Naya Product Add Karein</button>';
+  html+='<div class="card" style="margin-top:10px;padding:4px 14px;">';
+  DB.products.forEach(p=>{
+    html+='<div class="list-item"><div style="flex:1;" onclick="editProductModal(\''+p.id+'\')" style="cursor:pointer;"><div style="font-weight:700;font-size:13px;">'+p.name+'</div><div style="font-size:11px;color:var(--muted);">Cost '+money(p.cost)+' → Sale '+money(p.price)+' • Stock '+p.stock+'</div></div><button class="btn btn-ghost btn-sm" onclick="editProductModal(\''+p.id+'\')"><i class="fa-solid fa-pen"></i></button></div>';
+  });
+  html+='</div>';
+  return html;
+}
+function editProductModal(id){
+  const p=id?DB.products.find(x=>x.id===id):{name:'',category:'',packing:'',cost:'',price:'',stock:''};
+  let html='<h3>'+(id?'Product Edit Karein':'Naya Product')+'</h3>';
+  html+='<label class="f">Product Naam</label><input id="pf_name" value="'+p.name+'">';
+  html+='<label class="f">Category</label><input id="pf_cat" value="'+p.category+'" placeholder="e.g. Detergent">';
+  html+='<label class="f">Packing</label><input id="pf_pack" value="'+p.packing+'" placeholder="e.g. 24 pcs/ctn">';
+  html+='<div class="grid2">';
+  html+='<div><label class="f">Cost Price</label><input id="pf_cost" type="number" value="'+p.cost+'"></div>';
+  html+='<div><label class="f">Sale Price</label><input id="pf_price" type="number" value="'+p.price+'"></div>';
+  html+='</div>';
+  html+='<label class="f">Current Stock</label><input id="pf_stock" type="number" value="'+p.stock+'">';
+  html+='<button class="btn btn-primary btn-block" style="margin-top:16px;" onclick="saveProduct('+(id?"'"+id+"'":'null')+')"><i class="fa-solid fa-check"></i> Save Karein</button>';
+  if(id) html+='<button class="btn btn-danger btn-block" style="margin-top:8px;" onclick="deleteProduct(\''+id+'\')"><i class="fa-solid fa-trash"></i> Delete Karein</button>';
+  openModal(html);
+}
+function saveProduct(id){
+  const name=document.getElementById('pf_name').value.trim();
+  if(!name){ toast('Product naam zaroori hy','err'); return; }
+  const data={
+    name, category:document.getElementById('pf_cat').value.trim()||'General',
+    packing:document.getElementById('pf_pack').value.trim(),
+    cost:parseFloat(document.getElementById('pf_cost').value)||0,
+    price:parseFloat(document.getElementById('pf_price').value)||0,
+    stock:parseInt(document.getElementById('pf_stock').value)||0
+  };
+  if(id){ Object.assign(DB.products.find(x=>x.id===id),data); }
+  else { data.id=uid('p'); DB.products.push(data); }
+  saveDB(); closeModal(); toast('Product save ho gaya','ok'); render();
+}
+function deleteProduct(id){
+  DB.products=DB.products.filter(x=>x.id!==id);
+  saveDB(); closeModal(); toast('Product delete ho gaya','ok'); render();
+}
+
+function renderDBDukandars(){
+  let html='<button class="btn btn-primary btn-block" onclick="editDukandarModal()"><i class="fa-solid fa-plus"></i> Naya Dukandar Add Karein</button>';
+  html+='<div class="card" style="margin-top:10px;padding:4px 14px;">';
+  DB.dukandars.forEach(d=>{
+    html+='<div class="list-item"><div class="avatar">'+d.name.charAt(0)+'</div><div style="flex:1;"><div style="font-weight:700;font-size:13px;">'+d.name+'</div><div style="font-size:11px;color:var(--muted);">'+d.area+' • '+d.phone+' • '+d.day+'</div></div><button class="btn btn-ghost btn-sm" onclick="editDukandarModal(\''+d.id+'\')"><i class="fa-solid fa-pen"></i></button></div>';
+  });
+  html+='</div>';
+  return html;
+}
+function editDukandarModal(id){
+  const d=id?DB.dukandars.find(x=>x.id===id):{name:'',area:'',phone:'',day:'Monday'};
+  let html='<h3>'+(id?'Dukandar Edit Karein':'Naya Dukandar')+'</h3>';
+  html+='<label class="f">Dukan / Dukandar Ka Naam</label><input id="df_name" value="'+d.name+'">';
+  html+='<label class="f">Area</label><input id="df_area" value="'+d.area+'">';
+  html+='<label class="f">Phone</label><input id="df_phone" value="'+d.phone+'">';
+  html+='<label class="f">Route Day</label><select id="df_day">';
+  ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].forEach(day=>{
+    html+='<option '+(d.day===day?'selected':'')+'>'+day+'</option>';
+  });
+  html+='</select>';
+  html+='<button class="btn btn-primary btn-block" style="margin-top:16px;" onclick="saveDukandar('+(id?"'"+id+"'":'null')+')"><i class="fa-solid fa-check"></i> Save Karein</button>';
+  if(id) html+='<button class="btn btn-danger btn-block" style="margin-top:8px;" onclick="deleteDukandar(\''+id+'\')"><i class="fa-solid fa-trash"></i> Delete Karein</button>';
+  openModal(html);
+}
+function saveDukandar(id){
+  const name=document.getElementById('df_name').value.trim();
+  if(!name){ toast('Naam zaroori hy','err'); return; }
+  const data={name,area:document.getElementById('df_area').value.trim(),phone:document.getElementById('df_phone').value.trim(),day:document.getElementById('df_day').value};
+  if(id){ Object.assign(DB.dukandars.find(x=>x.id===id),data); }
+  else { data.id=uid('d'); DB.dukandars.push(data); }
+  saveDB(); closeModal(); toast('Dukandar save ho gaya','ok'); render();
+}
+function deleteDukandar(id){
+  DB.dukandars=DB.dukandars.filter(x=>x.id!==id);
+  saveDB(); closeModal(); toast('Dukandar delete ho gaya','ok'); render();
+}
+
+function renderDBSettings(){
+  let html='<div class="section-title">Cloud Sync (Google Sheets)</div>';
+  html+='<div class="card">';
+  html+='<p style="font-size:12px;color:var(--muted);line-height:1.6;margin-top:0;">Apna Google Apps Script Web App URL yahan paste karein taake orders khud-b-khud Google Sheet mein save hotay rahein.</p>';
+  html+='<label class="f">Apps Script Web App URL</label><input id="st_sheet" value="'+DB.settings.sheetUrl+'" placeholder="https://script.google.com/macros/s/.../exec">';
+  html+='<label class="f">Shop / Business Naam</label><input id="st_shop" value="'+DB.settings.shopName+'">';
+  html+='<label class="f">Currency Symbol</label><input id="st_cur" value="'+DB.settings.currency+'">';
+  html+='<button class="btn btn-primary btn-block" style="margin-top:14px;" onclick="saveSettings()"><i class="fa-solid fa-check"></i> Settings Save Karein</button>';
+  html+='</div>';
+
+  html+='<div class="section-title">Data Backup</div>';
+  html+='<div class="card">';
+  html+='<button class="btn btn-outline btn-block" onclick="exportData()"><i class="fa-solid fa-download"></i> Data Export Karein (JSON)</button>';
+  html+='<button class="btn btn-danger btn-block" style="margin-top:8px;" onclick="resetConfirm()"><i class="fa-solid fa-trash"></i> Sab Data Reset Karein</button>';
+  html+='</div>';
+  return html;
+}
+function saveSettings(){
+  DB.settings.sheetUrl=document.getElementById('st_sheet').value.trim();
+  DB.settings.shopName=document.getElementById('st_shop').value.trim();
+  DB.settings.currency=document.getElementById('st_cur').value.trim()||'Rs';
+  saveDB(); toast('Settings save ho gain','ok'); render();
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='rasta-sales-backup.json'; a.click();
+}
+function resetConfirm(){
+  let html='<h3>Pakka Reset Karna Hy?</h3><p style="font-size:13px;color:var(--muted);">Ye sab orders, products aur dukandars delete kar dega. Ye wapis nahi ho sakta.</p>';
+  html+='<button class="btn btn-danger btn-block" onclick="doReset()">Haan, Sab Delete Karein</button>';
+  html+='<button class="btn btn-outline btn-block" style="margin-top:8px;" onclick="closeModal()">Cancel</button>';
+  openModal(html);
+}
+function doReset(){
+  localStorage.removeItem(DB_KEY);
+  DB=loadDB();
+  closeModal(); toast('Data reset ho gaya','ok'); goTab('order');
+}
+
+/* ============================= DIN KA REPORT ============================= */
+let lastReportDate=todayStr();
+function openDayReport(){
+  document.getElementById('reportDate').value=lastReportDate;
+  document.getElementById('reportOverlay').classList.add('show');
+  renderDayReport(lastReportDate);
+}
+function closeDayReport(){ document.getElementById('reportOverlay').classList.remove('show'); }
+
+function renderDayReport(dateStr){
+  dateStr=dateStr||todayStr();
+  lastReportDate=dateStr;
+  const dayOrders=DB.orders.filter(o=>o.date.slice(0,10)===dateStr);
+  const body=document.getElementById('reportBody');
+
+  if(dayOrders.length===0){
+    body.innerHTML='<div class="empty" style="margin-top:40px;"><i class="fa-solid fa-inbox"></i>Is din ka koi order nahi mila</div>';
+    return;
+  }
+
+  // ---- Group by dukandar for individual bills ----
+  const byDukandar={};
+  dayOrders.forEach(o=>{
+    if(!byDukandar[o.dukandarId]) byDukandar[o.dukandarId]=[];
+    byDukandar[o.dukandarId].push(o);
+  });
+
+  // ---- Overall totals ----
+  const totalSale=dayOrders.reduce((s,o)=>s+o.total,0);
+  const totalCost=dayOrders.reduce((s,o)=>s+o.cost,0);
+  const totalProfit=dayOrders.reduce((s,o)=>s+o.profit,0);
+
+  // ---- Per product aggregation (profit + warehouse dispatch) ----
+  const perProduct={}; // name -> {qty, revenue, cost, profit}
+  dayOrders.forEach(o=>o.items.forEach(it=>{
+    if(!perProduct[it.name]) perProduct[it.name]={qty:0,revenue:0,cost:0,profit:0};
+    const rec=perProduct[it.name];
+    rec.qty+=it.qty;
+    rec.revenue+=it.qty*it.price;
+    rec.cost+=it.qty*it.cost;
+    rec.profit+=it.qty*(it.price-it.cost);
+  }));
+  const productRows=Object.entries(perProduct).sort((a,b)=>b[1].qty-a[1].qty);
+
+  let html='';
+
+  // Summary
+  html+='<div class="section-title" style="margin-top:0;">Khulasa (Summary) — '+fmtDate(dateStr)+'</div>';
+  html+='<div class="grid2">';
+  html+='<div class="stat"><div class="num" style="color:var(--brand);">'+money(totalSale)+'</div><div class="lbl">TOTAL SALE</div></div>';
+  html+='<div class="stat"><div class="num" style="color:var(--accent);">'+money(totalProfit)+'</div><div class="lbl">TOTAL PROFIT</div></div>';
+  html+='<div class="stat"><div class="num">'+dayOrders.length+'</div><div class="lbl">TOTAL ORDERS</div></div>';
+  html+='<div class="stat"><div class="num">'+Object.keys(byDukandar).length+'</div><div class="lbl">DUKANDAR COUNT</div></div>';
+  html+='</div>';
+
+  // Individual bills per dukandar
+  html+='<div class="section-title">Har Dukandar Ka Bill</div>';
+  Object.entries(byDukandar).forEach(([did,orders])=>{
+    const d=DB.dukandars.find(x=>x.id===did);
+    const dTotal=orders.reduce((s,o)=>s+o.total,0);
+    html+='<div class="bill-block">';
+    html+='<h4>'+(d?d.name:'—')+'</h4>';
+    html+='<div class="sub">'+(d?d.area+' • '+d.phone:'')+'</div>';
+    html+='<table class="mini-table">';
+    orders.forEach(o=>o.items.forEach(it=>{
+      html+='<tr><td>'+it.name+' <span style="color:var(--muted);">x'+it.qty+'</span></td><td>'+money(it.qty*it.price)+'</td></tr>';
+    }));
+    html+='</table>';
+    html+='<div class="mini-total"><span>Bill Total</span><span>'+money(dTotal)+'</span></div>';
+    html+='</div>';
+  });
+
+  // Per-product profit
+  html+='<div class="section-title">Har Product Ka Profit</div>';
+  html+='<div class="card"><table>';
+  html+='<tr><th>Product</th><th>Qty</th><th>Sale</th><th>Profit</th></tr>';
+  productRows.forEach(([name,r])=>{
+    html+='<tr><td>'+name+'</td><td>'+r.qty+'</td><td>'+money(r.revenue)+'</td><td style="color:var(--brand);font-weight:700;">'+money(r.profit)+'</td></tr>';
+  });
+  html+='<tr><td style="font-weight:800;">Total</td><td style="font-weight:800;">'+productRows.reduce((s,[,r])=>s+r.qty,0)+'</td><td style="font-weight:800;">'+money(totalSale)+'</td><td style="font-weight:800;color:var(--brand);">'+money(totalProfit)+'</td></tr>';
+  html+='</table></div>';
+
+  // Warehouse dispatch list
+  html+='<div class="section-title">Warehouse Dispatch List <span style="color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0;">(ye maal warehouse se nikalna hy)</span></div>';
+  html+='<div class="card" style="padding:4px 14px;">';
+  productRows.forEach(([name,r])=>{
+    const prod=DB.products.find(p=>p.name===name);
+    html+='<div class="list-item"><div style="flex:1;"><div style="font-weight:700;font-size:13px;">'+name+'</div><div style="font-size:11px;color:var(--muted);">'+(prod?prod.packing+' • '+prod.category:'')+'</div></div><span class="badge badge-green" style="font-size:12px;padding:6px 11px;">'+r.qty+' pcs</span></div>';
+  });
+  html+='</div>';
+
+  body.innerHTML=html;
+}
+
+function downloadReportText(){
+  const dateStr=lastReportDate;
+  const dayOrders=DB.orders.filter(o=>o.date.slice(0,10)===dateStr);
+  if(dayOrders.length===0){ toast('Is din ka koi data nahi','err'); return; }
+
+  const byDukandar={};
+  dayOrders.forEach(o=>{ if(!byDukandar[o.dukandarId]) byDukandar[o.dukandarId]=[]; byDukandar[o.dukandarId].push(o); });
+  const totalSale=dayOrders.reduce((s,o)=>s+o.total,0);
+  const totalProfit=dayOrders.reduce((s,o)=>s+o.profit,0);
+  const perProduct={};
+  dayOrders.forEach(o=>o.items.forEach(it=>{
+    if(!perProduct[it.name]) perProduct[it.name]={qty:0,revenue:0,profit:0};
+    perProduct[it.name].qty+=it.qty;
+    perProduct[it.name].revenue+=it.qty*it.price;
+    perProduct[it.name].profit+=it.qty*(it.price-it.cost);
+  }));
+
+  let txt='DIN KA REPORT — '+dateStr+'\n';
+  txt+='='.repeat(40)+'\n\n';
+  txt+='TOTAL SALE: '+money(totalSale)+'\nTOTAL PROFIT: '+money(totalProfit)+'\nTOTAL ORDERS: '+dayOrders.length+'\n\n';
+
+  txt+='HAR DUKANDAR KA BILL\n'+'-'.repeat(40)+'\n';
+  Object.entries(byDukandar).forEach(([did,orders])=>{
+    const d=DB.dukandars.find(x=>x.id===did);
+    const dTotal=orders.reduce((s,o)=>s+o.total,0);
+    txt+='\n'+(d?d.name:'—')+' ('+(d?d.area:'')+')\n';
+    orders.forEach(o=>o.items.forEach(it=>{ txt+='  '+it.name+' x'+it.qty+' = '+money(it.qty*it.price)+'\n'; }));
+    txt+='  TOTAL: '+money(dTotal)+'\n';
+  });
+
+  txt+='\nHAR PRODUCT KA PROFIT\n'+'-'.repeat(40)+'\n';
+  Object.entries(perProduct).forEach(([name,r])=>{ txt+=name+' | Qty: '+r.qty+' | Sale: '+money(r.revenue)+' | Profit: '+money(r.profit)+'\n'; });
+
+  txt+='\nWAREHOUSE DISPATCH LIST\n'+'-'.repeat(40)+'\n';
+  Object.entries(perProduct).forEach(([name,r])=>{ txt+=name+' — '+r.qty+' pcs\n'; });
+
+  const blob=new Blob([txt],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='din-ka-report-'+dateStr+'.txt'; a.click();
+}
+
+/* ============================= INIT ============================= */
+goTab('order');
+</script>
+</body>
+</html>
